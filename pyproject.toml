@@ -1,0 +1,18 @@
+[project]
+name = "backend-for-notes-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.117.1",
+    "logger>=1.4",
+    "loguru>=0.7.3",
+    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
+    "pydantic>=2.11.9",
+    "pydantic-settings>=2.11.0",
+    "sqlalchemy>=2.0.43",
+    "typing>=3.10.0.0",
+    "uvicorn>=0.36.0",
+]
