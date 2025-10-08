@@ -26,3 +26,7 @@ app.include_router(napp,prefix="/api")
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+# // python -m debugpy --listen 5678 -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+# // python -m debugpy --listen 5678 --wait-for-client main.py
+# // uv run python -m debugpy --listen 5678 --wait-for-client main.py

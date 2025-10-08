@@ -17,15 +17,17 @@ def get_notes(request:Request,db:Session=Depends(get_db),rdb:Session=Depends(get
     try :
         # cursor=rdb.cursor(cursor=DictCursor) ## for pymysql not for postgresql
         cursor=rdb.cursor(cursor_factory=DictCursor)
-        query='''select * from notes'''
+        query='''select id,title,note,important,archive from notes where isdeleted=false'''
         cursor.execute(query)
-        res=cursor.fetchone()
-        logger.info(res["title"])
+        res=cursor.fetchall()
+        # logger.info(res["important"])
+        # if res["important"]:
+        #     logger.info("I am Prince Sharma")
         return res
         
     except Exception as e :
         logger.error(e)
-        # raise e
+        raise e
     
 class ADDNOTE(BaseModel):
     title:str
@@ -39,7 +41,10 @@ def add_note(request:Request,new_note:ADDNOTE,db:Session=Depends(get_db),rdb:Ses
             title=new_note.title,
             note=new_note.note,
             important=new_note.important,
-            archive=new_note.archive
+            archive=new_note.archive,
+            created_by=1,
+            created_time=datetime.now().date(),
+            updated_time=datetime.now(),
         )
         db.add(add_note)
         db.commit()
@@ -50,13 +55,14 @@ def add_note(request:Request,new_note:ADDNOTE,db:Session=Depends(get_db),rdb:Ses
         }
     
     except Exception as e :
+        logger.info(new_note)
         logger.error(e)
         raise e
 
 class EDITNOTE(BaseModel):
     id:int
     title:str
-    note:str=None
+    notes:str=None
     important:bool
     archive:bool
 @napp.put("/edit_notes",tags=["Notes App"])
@@ -66,7 +72,8 @@ def edit_note(request:Request,edit:EDITNOTE,db:Session=Depends(get_db),rdb:Sessi
             "title":edit.title,
             "note":edit.note,
             "important":edit.important,
-            "archive":edit.archive
+            "archive":edit.archive,
+            "updated_time":datetime.now()
         })
         db.commit()
         
