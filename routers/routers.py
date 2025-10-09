@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy import text
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from psycopg2.extras import DictCursor
+from psycopg2.extras import RealDictCursor
 
 from db.db import get_db, get_raw_db,SessionLocal
 from db.models import Notes
@@ -13,10 +13,10 @@ from db.models import Notes
 napp=APIRouter()
 
 @napp.get("/get_notes",tags=['Notes App'])
-def get_notes(request:Request,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
+async def get_notes(request:Request,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
     try :
         # cursor=rdb.cursor(cursor=DictCursor) ## for pymysql not for postgresql
-        cursor=rdb.cursor(cursor_factory=DictCursor)
+        cursor=rdb.cursor(cursor_factory=RealDictCursor)
         query='''select id,title,note,important,archive from notes where isdeleted=false'''
         cursor.execute(query)
         res=cursor.fetchall()
@@ -35,7 +35,7 @@ class ADDNOTE(BaseModel):
     important:bool=False
     archive:bool=False
 @napp.post("/add_note",tags=['Notes App'])
-def add_note(request:Request,new_note:ADDNOTE,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
+async def add_note(request:Request,new_note:ADDNOTE,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
     try:
         add_note=Notes(
             title=new_note.title,
@@ -88,7 +88,7 @@ def edit_note(request:Request,edit:EDITNOTE,db:Session=Depends(get_db),rdb:Sessi
 @napp.delete("/delete_note",tags=['Notes App'])
 def delete_note(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
     try:
-        cursor=rdb.cursor(cursor_factory=DictCursor)
+        cursor=rdb.cursor(cursor_factory=RealDictCursor)
         query=f'''delete from notes where id={note_id}'''
         cursor.execute(query)
         
@@ -99,3 +99,4 @@ def delete_note(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Sessi
     except Exception as e :
         logger.error(e)
         raise e
+
