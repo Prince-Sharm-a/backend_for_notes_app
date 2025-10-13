@@ -62,17 +62,13 @@ async def add_note(request:Request,new_note:ADDNOTE,db:Session=Depends(get_db),r
 class EDITNOTE(BaseModel):
     id:int
     title:str
-    notes:str=None
-    important:bool
-    archive:bool
+    note:str=None
 @napp.put("/edit_notes",tags=["Notes App"])
 def edit_note(request:Request,edit:EDITNOTE,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
     try:
         upd_note=db.query(Notes).filter_by(id=edit.id).update({
             "title":edit.title,
             "note":edit.note,
-            "important":edit.important,
-            "archive":edit.archive,
             "updated_time":datetime.now()
         })
         db.commit()
@@ -100,3 +96,36 @@ def delete_note(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Sessi
         logger.error(e)
         raise e
 
+@napp.put("/make_important_note",tags=['Notes App'])
+def make_important(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
+    try:
+        upd_note=db.query(Notes).filter_by(id=note_id).update({
+            "important":True,
+            "archive":False,
+        })
+        db.commit()
+        
+        return {
+            "status code":200,
+            "data":"Note is Now Important"
+        }
+    except Exception as e:
+        logger.error(e)
+        raise e
+        
+@napp.put('/make_archive_note',tags=['Notes App'])
+def make_archive(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
+    try:
+        upd_note=db.query(Notes).filter_by(id=note_id).update({
+            "important":False,
+            "archive":True,
+        })
+        db.commit()
+        
+        return {
+            "status code":200,
+            "data":"Note is Now Archived"
+        }
+    except Exception as e:
+        logger.error(e)
+        raise e
