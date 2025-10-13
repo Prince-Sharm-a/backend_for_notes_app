@@ -7,5 +7,6 @@ wheels/
 *.egg-info
 *.env
 # Virtual environments
+.idea
 .venv
 requirements.txt
