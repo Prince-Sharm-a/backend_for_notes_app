@@ -17,7 +17,7 @@ async def get_notes(request:Request,db:Session=Depends(get_db),rdb:Session=Depen
     try :
         # cursor=rdb.cursor(cursor=DictCursor) ## for pymysql not for postgresql
         cursor=rdb.cursor(cursor_factory=RealDictCursor)
-        query='''select id,title,note,important,archive from notes where isdeleted=false'''
+        query='''select id,title,note,important,archive from notes where isdeleted=false order by id'''
         cursor.execute(query)
         res=cursor.fetchall()
         # logger.info(res["important"])
@@ -81,6 +81,22 @@ def edit_note(request:Request,edit:EDITNOTE,db:Session=Depends(get_db),rdb:Sessi
         logger.error(e)
         raise e
     
+@napp.delete("/move_to_bin",tags=['Notes App'])
+def move_to_bin(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
+    try:
+        del_note=db.query(Notes).filter_by(id=note_id).update({
+            "isdeleted":True,
+            "updated_time":datetime.now(),
+        })
+        db.commit()
+        return {
+            "status code":200,
+            "data":"Note Moved to Bin"
+        }
+    except Exception as e:
+        logger.error(e)
+        raise e
+    
 @napp.delete("/delete_note",tags=['Notes App'])
 def delete_note(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
     try:
@@ -99,10 +115,10 @@ def delete_note(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Sessi
 @napp.put("/make_important_note",tags=['Notes App'])
 def make_important(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
     try:
-        upd_note=db.query(Notes).filter_by(id=note_id).update({
-            "important":True,
-            "archive":False,
-        })
+        upd_note=db.query(Notes).filter_by(id=note_id).first()
+        upd_note.important =  not upd_note.important
+        upd_note.archive = False
+        
         db.commit()
         
         return {
@@ -116,16 +132,28 @@ def make_important(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Se
 @napp.put('/make_archive_note',tags=['Notes App'])
 def make_archive(request:Request,note_id:int,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
     try:
-        upd_note=db.query(Notes).filter_by(id=note_id).update({
-            "important":False,
-            "archive":True,
-        })
+        upd_note=db.query(Notes).filter_by(id=note_id).first()
+        upd_note.archive = not upd_note.archive
+        upd_note.important = False
         db.commit()
         
         return {
             "status code":200,
             "data":"Note is Now Archived"
         }
+    except Exception as e:
+        logger.error(e)
+        raise e
+
+@napp.get("/get_trashed_notes",tags=['Notes App'])
+def get_trashed_notes(request:Request,db:Session=Depends(get_db),rdb:Session=Depends(get_raw_db)):
+    try:
+        cursor=rdb.cursor(cursor_factory=RealDictCursor)
+        query='''select id,title,note,important,archive from notes where isdeleted=true order by updated_time'''
+        cursor.execute(query)
+        res=cursor.fetchall()
+        
+        return res
     except Exception as e:
         logger.error(e)
         raise e
