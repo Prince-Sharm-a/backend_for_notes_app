@@ -9,4 +9,3 @@ wheels/
 # Virtual environments
 .idea
 .venv
-requirements.txt
